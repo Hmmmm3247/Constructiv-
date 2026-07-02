@@ -1,0 +1,65 @@
+concept_id: conditionals
+source: Python Software Foundation Docs — Compound Statements
+learning_objective: >
+  Write if/elif/else chains that correctly branch on boolean conditions,
+  including comparisons, membership tests, and compound conditions with and/or/not.
+
+prerequisites:
+  - variables_and_types
+
+advance_to:
+  - loops_iteration      # while loops are conditionals with repetition
+  - recursion_basics     # base case is a conditional — can't recurse without it
+  - error_handling       # try/except is a conditional over exceptions
+
+typical_sessions_to_master: 2
+
+worked_examples:
+  - id: fizzbuzz_single
+    code: |
+      def fizzbuzz(n):
+          if n % 15 == 0:
+              return "FizzBuzz"
+          elif n % 3 == 0:
+              return "Fizz"
+          elif n % 5 == 0:
+              return "Buzz"
+          return str(n)
+    test_cases:
+      - {input: 3,   expected: "Fizz"}
+      - {input: 5,   expected: "Buzz"}
+      - {input: 15,  expected: "FizzBuzz"}
+      - {input: 7,   expected: "7"}
+
+  - id: clamp
+    code: |
+      def clamp(value, lo, hi):
+          if value < lo:
+              return lo
+          elif value > hi:
+              return hi
+          return value
+    test_cases:
+      - {input: [3, 0, 10],   expected: 3}
+      - {input: [-5, 0, 10],  expected: 0}
+      - {input: [15, 0, 10],  expected: 10}
+
+failure_modes:
+  - id: wrong_order
+    description: elif after else, or Fizz/Buzz before FizzBuzz — shadowed branch
+    executor_signal: wrong_answer
+    provocateur_prompts:
+      - "What does Python do when the first condition is True — does it check the rest?"
+      - "For n=15, which branch fires first in your code? Should it?"
+
+  - id: off_by_one_boundary
+    description: < vs <= — boundary value handled by wrong branch
+    executor_signal: wrong_answer
+    provocateur_prompts:
+      - "What happens exactly at the boundary value? Try n equal to your threshold."
+
+  - id: missing_else
+    description: No default return — function returns None on unmatched inputs
+    executor_signal: wrong_answer
+    provocateur_prompts:
+      - "What does your function return if none of the conditions match? What should it return?"

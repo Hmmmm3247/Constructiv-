@@ -1,0 +1,61 @@
+concept_id: variables_and_types
+source: Python Software Foundation Docs — Built-in Types
+learning_objective: >
+  Assign values to variables, identify the type of a value, and convert between
+  int, float, str, and bool correctly.
+
+prerequisites: []   # true entry point of the curriculum
+
+advance_to:
+  - conditionals         # comparisons require knowing what types can be compared
+  - functions_and_scope  # functions are meaningless without values to pass
+  - loops_iteration      # loop counters and collections need typed values
+  - string_methods       # string manipulation presupposes knowing strings exist
+
+typical_sessions_to_master: 2
+
+worked_examples:
+  - id: type_conversion
+    code: |
+      def to_int_safe(value):
+          try:
+              return int(value)
+          except (ValueError, TypeError):
+              return None
+    test_cases:
+      - {input: "42",   expected: 42}
+      - {input: "3.9",  expected: 3}
+      - {input: "abc",  expected: null}
+      - {input: null,   expected: null}
+
+  - id: type_check
+    code: |
+      def describe_type(x):
+          if isinstance(x, bool):
+              return "bool"
+          elif isinstance(x, int):
+              return "int"
+          elif isinstance(x, float):
+              return "float"
+          elif isinstance(x, str):
+              return "str"
+          return "other"
+    test_cases:
+      - {input: 1,      expected: "int"}
+      - {input: 1.5,    expected: "float"}
+      - {input: true,   expected: "bool"}
+      - {input: "hi",   expected: "str"}
+
+failure_modes:
+  - id: type_error_concat
+    description: Concatenating int and str without conversion
+    executor_signal: TypeError
+    provocateur_prompts:
+      - "What type is the left side of your + ? What type is the right side?"
+      - "Python can't add an int and a str directly — which side needs converting, and how?"
+
+  - id: wrong_conversion
+    description: Using str() when int() was needed, or vice versa
+    executor_signal: wrong_answer
+    provocateur_prompts:
+      - "What does your function receive? What type should it return? Are those the same conversion?"

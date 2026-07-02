@@ -1,0 +1,121 @@
+concept_id: loops_iteration
+source: MIT 6.0001 Lecture 5
+learning_objective: >
+  Use for and while loops to repeat operations, accumulate results, and
+  know which loop type fits a given problem.
+
+# ── Consequence graph ─────────────────────────────────────────────────────
+prerequisites:
+  - conditionals
+  - variables
+
+advance_to:
+  - list_comprehensions       # comprehensions are syntactic sugar over for loops
+  - recursion_basics          # recursion is loops' conceptual alternative — teach as foil
+  - higher_order_functions    # map/filter replace common loop patterns
+
+typical_sessions_to_master: 2
+
+# ── Worked examples ───────────────────────────────────────────────────────
+worked_examples:
+  - id: sum_list
+    code: |
+      def sum_list(nums):
+          total = 0
+          for n in nums:
+              total += n
+          return total
+    test_cases:
+      - {input: [1, 2, 3],    expected: 6}
+      - {input: [],            expected: 0}
+      - {input: [10, -3, 7],  expected: 14}
+
+  - id: count_down
+    code: |
+      def count_down(n):
+          result = []
+          while n > 0:
+              result.append(n)
+              n -= 1
+          return result
+    test_cases:
+      - {input: 3, expected: [3, 2, 1]}
+      - {input: 0, expected: []}
+      - {input: 1, expected: [1]}
+
+# ── Known failure modes ───────────────────────────────────────────────────
+failure_modes:
+
+  - id: off_by_one_range
+    description: range(n) vs range(1, n+1) confusion — skips first or last element
+    executor_signal: wrong_answer (result missing one element or has wrong values)
+    disambiguate: null
+    provocateur_strategy: trace_execution
+    provocateur_prompts:
+      - "What does range(5) actually produce? Print list(range(5)) and show me."
+      - "Your loop runs — but which numbers does it actually see? Trace the first three."
+
+  - id: missing_accumulator_init
+    description: Accumulator variable not initialized before the loop
+    executor_signal: NameError or wrong_answer (starts at wrong value)
+    disambiguate: "NameError if missing entirely; wrong_answer if initialized inside loop body"
+    provocateur_strategy: surface_gap
+    provocateur_prompts:
+      - "Where do you set total to 0? Is that before the loop starts?"
+      - "Each loop iteration adds to total — but what is total worth on the very first iteration?"
+
+  - id: infinite_while
+    description: While condition never becomes False — loop runs forever
+    executor_signal: Timeout or KeyboardInterrupt
+    disambiguate: null
+    provocateur_strategy: trace_execution
+    provocateur_prompts:
+      - "What changes n inside your while loop? Show me the line that moves it toward the stopping condition."
+      - "Trace three iterations: what is n at the start of iteration 1, 2, 3?"
+
+  - id: mutate_while_iterating
+    description: Modifying the list being iterated produces skipped elements
+    executor_signal: wrong_answer (elements skipped or duplicated)
+    disambiguate: "for loop over list that is modified inside the loop body"
+    provocateur_strategy: deliberate_check
+    provocateur_prompts:
+      - "What happens to the list's length inside the loop while you're removing elements?"
+      - "Try iterating over a copy instead: for x in nums[:]. What changes?"
+
+  - id: return_inside_loop
+    description: Return exits the function on the first iteration
+    executor_signal: wrong_answer (only first element processed)
+    disambiguate: "return statement inside loop body, not after it"
+    provocateur_strategy: trace_execution
+    provocateur_prompts:
+      - "On the very first loop iteration, does your function return? What gets skipped?"
+      - "Should the return be inside the loop or after it?"
+
+# ── Partial reveals ───────────────────────────────────────────────────────
+partial_reveals:
+  - trigger: missing_accumulator_init
+    reveal: >
+      Before the loop starts, create the variable you'll accumulate into.
+      For a sum, that's total = 0. The loop adds to it; you return it after.
+      Where in your code does total start?
+
+  - trigger: infinite_while
+    reveal: >
+      A while loop needs something inside it that eventually makes the condition False.
+      If your condition is `n > 0`, the loop body must decrease n somewhere.
+      Add `n -= 1` and trace what happens on each iteration.
+
+  - trigger: generic_stuck
+    reveal: >
+      A loop has three pieces: a start value, a condition to keep going, and
+      something that changes each iteration. Let's check yours has all three.
+      What is your starting value?
+
+# ── Variant bounds ────────────────────────────────────────────────────────
+variant_template:
+  base_problems: [sum_list, count_down]
+  perturbation_axes:
+    - operation: [product, max, count_evens, count_matching]
+    - container: [list, string, range]
+    - loop_type: [for, while]
+  self_check: run_against_test_cases_before_showing

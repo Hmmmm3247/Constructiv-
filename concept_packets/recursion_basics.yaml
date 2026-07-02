@@ -1,0 +1,125 @@
+concept_id: recursion_basics
+source: MIT 6.0001 Lecture 6
+learning_objective: >
+  Write a correct recursive function containing a base case, a recursive case,
+  and guaranteed progress toward the base case.
+
+# ── Consequence graph (load-bearing for Auditor) ──────────────────────────
+prerequisites:
+  - functions_and_scope
+  - conditionals
+  - return_statements
+
+advance_to:
+  - tree_recursion          # hop 1 — direct application
+  - recursive_data_structures  # hop 1 — linked lists, trees
+  - dynamic_programming     # hop 2 — requires tree_recursion first
+  - memoization             # hop 2 — optimization layer on recursion
+
+typical_sessions_to_master: 3   # Auditor uses this to estimate downstream risk timing
+
+# ── Worked examples from OCW ──────────────────────────────────────────────
+worked_examples:
+  - id: factorial
+    code: |
+      def factorial(n):
+          if n == 0:
+              return 1
+          return n * factorial(n - 1)
+    test_cases:
+      - {input: 0,  expected: 1}
+      - {input: 1,  expected: 1}
+      - {input: 5,  expected: 120}
+      - {input: 10, expected: 3628800}
+
+  - id: sum_digits
+    code: |
+      def sum_digits(n):
+          if n < 10:
+              return n
+          return (n % 10) + sum_digits(n // 10)
+    test_cases:
+      - {input: 7,    expected: 7}
+      - {input: 12,   expected: 3}
+      - {input: 493,  expected: 16}
+
+# ── Known failure modes ───────────────────────────────────────────────────
+# disambiguate field added wherever two modes share an executor signal
+failure_modes:
+
+  - id: missing_base_case
+    description: No termination condition — infinite recursion
+    executor_signal: RecursionError
+    disambiguate: "no unconditional return path exists in the function body"
+    provocateur_strategy: surface_gap
+    provocateur_prompts:
+      - "Walk me through what happens when n=1 in your function. What does it return?"
+      - "Your function calls itself — when does it stop?"
+
+  - id: no_progress
+    description: Base case exists but argument never moves toward it
+    executor_signal: RecursionError
+    disambiguate: "unconditional return path exists BUT recursive argument equals input (e.g. factorial(n) not factorial(n-1))"
+    provocateur_strategy: trace_execution
+    provocateur_prompts:
+      - "Each time your function calls itself, how does n change? Show me n for the first three calls."
+      - "Is n getting smaller each time? Trace it for me starting at n=3."
+
+  - id: wrong_base_case
+    description: Base case is n==1 instead of n==0 — misses the boundary input
+    executor_signal: RecursionError
+    disambiguate: "base case present and arg reduces but boundary input not covered"
+    provocateur_strategy: surface_gap
+    provocateur_prompts:
+      - "What should factorial(0) return mathematically? What does yours return?"
+      - "Try calling your function with 0. What happens?"
+
+  - id: wrong_formula
+    description: Right structure, wrong operation — addition instead of multiplication
+    executor_signal: wrong_answer on test_case input=5 (returns 16 not 120)
+    disambiguate: null   # unique signal (16 != 120 is unambiguous)
+    provocateur_strategy: deliberate_check
+    provocateur_prompts:
+      - "factorial(5) should be 120. What does yours return? Work through it step by step."
+      - "What's the mathematical definition of n!? Does your formula match it?"
+
+  - id: inverted_cases
+    description: Returns constant always — base case swallowed recursive case
+    executor_signal: wrong_answer on all inputs > 1 (returns same value)
+    disambiguate: null
+    provocateur_strategy: trace_execution
+    provocateur_prompts:
+      - "What does your function return for factorial(3)? And factorial(4)? Should those be different?"
+
+# ── Partial reveals (Tutor in Struggling mode) ────────────────────────────
+partial_reveals:
+  - trigger: missing_base_case
+    reveal: >
+      Every recursive function needs a stopping point. For factorial, that's
+      when n equals 0 — at that point, return 1. Add that condition first,
+      then we'll look at the recursive step together.
+
+  - trigger: no_progress
+    reveal: >
+      The recursive call needs to move toward the base case. If your base case
+      is n==0, each call should reduce n by 1. What changes if you write
+      factorial(n-1) instead of factorial(n)?
+
+  - trigger: wrong_formula
+    reveal: >
+      Think about what factorial(3) means: 3 × 2 × 1 = 6. Each step multiplies,
+      not adds. Which operator connects n to factorial(n-1)?
+
+  - trigger: generic_stuck
+    reveal: >
+      Let's build it in two pieces. First: what should the function return
+      when n is 0? Just that one line — don't think about the recursive part yet.
+
+# ── Variant problem generator bounds ─────────────────────────────────────
+variant_template:
+  base_problems: [factorial, sum_digits]
+  perturbation_axes:
+    - what_to_count: [characters in string, items in list, digits]
+    - operation: [sum, product, count]
+    - base_case_value: [0, empty_string, empty_list]
+  self_check: run_against_test_cases_before_showing

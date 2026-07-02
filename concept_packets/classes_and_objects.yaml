@@ -1,0 +1,62 @@
+concept_id: classes_and_objects
+source: Python Software Foundation Docs — Classes
+learning_objective: >
+  Define a class with __init__ and instance methods, instantiate objects,
+  and understand the difference between instance state and class-level attributes.
+
+prerequisites:
+  - functions_and_scope
+  - error_handling
+
+advance_to:
+  - higher_order_functions   # __call__, decorators, and first-class functions converge here
+  - sorting_and_searching    # key=lambda connects OOP to functional patterns
+
+typical_sessions_to_master: 4
+
+worked_examples:
+  - id: counter
+    code: |
+      class Counter:
+          def __init__(self, start=0):
+              self.value = start
+
+          def increment(self):
+              self.value += 1
+
+          def reset(self):
+              self.value = 0
+    test_cases:
+      - {input: "Counter(0).value",      expected: 0}
+      - {input: "c=Counter(0);c.increment();c.value",  expected: 1}
+      - {input: "c=Counter(5);c.reset();c.value",      expected: 0}
+
+  - id: rectangle
+    code: |
+      class Rectangle:
+          def __init__(self, width, height):
+              self.width = width
+              self.height = height
+
+          def area(self):
+              return self.width * self.height
+
+          def perimeter(self):
+              return 2 * (self.width + self.height)
+    test_cases:
+      - {input: "Rectangle(3, 4).area()",       expected: 12}
+      - {input: "Rectangle(3, 4).perimeter()",  expected: 14}
+      - {input: "Rectangle(1, 1).area()",       expected: 1}
+
+failure_modes:
+  - id: missing_self
+    description: Method defined without self parameter — TypeError on call
+    executor_signal: TypeError
+    provocateur_prompts:
+      - "What does the first parameter of a method represent? What happens if you omit it?"
+
+  - id: class_vs_instance_attr
+    description: Attribute defined at class level shared across all instances
+    executor_signal: wrong_answer
+    provocateur_prompts:
+      - "If you change that attribute on one object, does it change on all objects? Try it with two instances."

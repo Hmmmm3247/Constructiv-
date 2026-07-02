@@ -1,0 +1,47 @@
+concept_id: sorting_and_searching
+source: Python Software Foundation Docs — Sorting HOW TO
+learning_objective: >
+  Sort lists using sorted() and .sort() with custom key functions, and search
+  sequences using linear scan, bisect, and the 'in' operator.
+
+prerequisites:
+  - loops_iteration
+  - list_comprehensions
+
+advance_to:
+  - higher_order_functions   # key=lambda is the entry point for first-class functions
+  - dynamic_programming      # binary search + memoization share the divide-and-conquer mental model
+
+typical_sessions_to_master: 3
+
+worked_examples:
+  - id: top_n
+    code: |
+      def top_n(nums, n):
+          return sorted(nums, reverse=True)[:n]
+    test_cases:
+      - {input: [[3, 1, 4, 1, 5, 9], 3],  expected: [9, 5, 4]}
+      - {input: [[7, 2, 8], 1],            expected: [8]}
+      - {input: [[], 3],                   expected: []}
+
+  - id: sort_by_length
+    code: |
+      def sort_by_length(words):
+          return sorted(words, key=len)
+    test_cases:
+      - {input: ["banana", "apple", "fig"],     expected: ["fig", "apple", "banana"]}
+      - {input: ["a", "bb", "ccc"],             expected: ["a", "bb", "ccc"]}
+      - {input: ["equal", "words", "found"],    expected: ["equal", "words", "found"]}
+
+failure_modes:
+  - id: sort_vs_sorted
+    description: Using .sort() (mutates, returns None) when sorted() was needed
+    executor_signal: wrong_answer
+    provocateur_prompts:
+      - "What does .sort() return? What does sorted() return? Try printing both."
+
+  - id: wrong_key_type
+    description: key= returns wrong type causing TypeError in comparison
+    executor_signal: TypeError
+    provocateur_prompts:
+      - "What type does your key function return? Can Python compare those values with < ?"

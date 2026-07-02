@@ -1,0 +1,48 @@
+concept_id: string_methods
+source: Python Software Foundation Docs — str Methods
+learning_objective: >
+  Use Python's built-in string methods (.split, .join, .strip, .replace, .upper,
+  .lower, .startswith, .endswith) to transform and interrogate text data.
+
+prerequisites:
+  - variables_and_types
+
+advance_to:
+  - list_comprehensions     # .split() returns a list — comprehensions over words is natural next step
+  - error_handling          # parsing strings that may not match expected format
+  - sorting_and_searching   # sorting words, searching substrings
+
+typical_sessions_to_master: 2
+
+worked_examples:
+  - id: word_count
+    code: |
+      def word_count(sentence):
+          return len(sentence.strip().split())
+    test_cases:
+      - {input: "hello world",       expected: 2}
+      - {input: "  spaces  here  ",  expected: 2}
+      - {input: "",                  expected: 0}
+      - {input: "one",               expected: 1}
+
+  - id: title_case_custom
+    code: |
+      def to_title(sentence):
+          return " ".join(word.capitalize() for word in sentence.split())
+    test_cases:
+      - {input: "hello world",   expected: "Hello World"}
+      - {input: "python is fun", expected: "Python Is Fun"}
+      - {input: "UPPER CASE",    expected: "Upper Case"}
+
+failure_modes:
+  - id: split_without_strip
+    description: Leading/trailing whitespace causes empty strings in split result
+    executor_signal: wrong_answer
+    provocateur_prompts:
+      - "Try your function with '  hello world  ' — what does .split() return? What about .strip().split()?"
+
+  - id: join_wrong_separator
+    description: Using the wrong separator in .join() — commas instead of spaces
+    executor_signal: wrong_answer
+    provocateur_prompts:
+      - "What separator does .join() put between words? What separator does the expected output use?"

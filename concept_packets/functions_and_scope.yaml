@@ -1,0 +1,113 @@
+concept_id: functions_and_scope
+source: MIT 6.0001 Lecture 4
+learning_objective: >
+  Define functions with parameters and return values, call them correctly,
+  and explain why variables inside a function don't affect the outside world.
+
+# ── Consequence graph ─────────────────────────────────────────────────────
+# Widest fan-out node in the graph — stuck here blocks almost everything.
+prerequisites:
+  - variables
+  - basic_syntax
+
+advance_to:
+  - conditionals
+  - loops_iteration
+  - recursion_basics
+  - list_comprehensions
+  - higher_order_functions
+  - classes_and_objects
+
+typical_sessions_to_master: 2
+
+# ── Worked examples ───────────────────────────────────────────────────────
+worked_examples:
+  - id: add_numbers
+    code: |
+      def add(a, b):
+          return a + b
+
+      result = add(3, 4)
+    test_cases:
+      - {input: [3, 4],  expected: 7}
+      - {input: [0, 0],  expected: 0}
+      - {input: [-1, 5], expected: 4}
+
+  - id: scope_demo
+    code: |
+      x = 10
+
+      def double_it(x):
+          x = x * 2
+          return x
+
+      double_it(5)
+      # x outside is still 10
+    test_cases:
+      - {call: "double_it(5)", expected: 10}
+      - {check: "x after call", expected: 10}
+
+# ── Known failure modes ───────────────────────────────────────────────────
+failure_modes:
+
+  - id: missing_return
+    description: Function body runs but returns None implicitly
+    executor_signal: wrong_answer (None where a value expected)
+    disambiguate: null
+    provocateur_strategy: trace_execution
+    provocateur_prompts:
+      - "What does your function return? Call it and print the result."
+      - "Every function returns something — what does yours return when it finishes?"
+
+  - id: scope_confusion_read
+    description: Learner thinks modifying a local variable changes the global one
+    executor_signal: wrong_answer (outer variable unchanged after call)
+    disambiguate: "function has no 'global' declaration but learner expects outer var to change"
+    provocateur_strategy: surface_gap
+    provocateur_prompts:
+      - "After calling the function, what is x outside? Print it and show me."
+      - "Variables inside a function are local copies. What happens to the copy when the function returns?"
+
+  - id: wrong_arg_count
+    description: Calling function with too few or too many arguments
+    executor_signal: TypeError (missing/unexpected argument)
+    disambiguate: null
+    provocateur_strategy: surface_gap
+    provocateur_prompts:
+      - "How many parameters does your function define? How many are you passing when you call it?"
+
+  - id: return_in_wrong_place
+    description: Return statement exits the function earlier than intended
+    executor_signal: wrong_answer (only first iteration result returned from loop)
+    disambiguate: "function contains a loop with return inside the loop body"
+    provocateur_strategy: trace_execution
+    provocateur_prompts:
+      - "Your function returns inside the loop. What happens to the loop when it hits return?"
+      - "Trace it: on the very first iteration, what does your function do?"
+
+# ── Partial reveals ───────────────────────────────────────────────────────
+partial_reveals:
+  - trigger: missing_return
+    reveal: >
+      A function that doesn't say return gives back None. Add a return statement
+      at the end that gives back the value you computed. What value should it give back?
+
+  - trigger: scope_confusion_read
+    reveal: >
+      Python makes a local copy of variables inside a function. The original outside
+      is untouched. To get the new value out, you return it. Try: result = double_it(5)
+      and print result — is that what you expected?
+
+  - trigger: generic_stuck
+    reveal: >
+      A function has two parts: the definition (def name(params):) and the return
+      (return value). Let's check yours has both. Does your function have a return line?
+
+# ── Variant bounds ────────────────────────────────────────────────────────
+variant_template:
+  base_problems: [add_numbers, scope_demo]
+  perturbation_axes:
+    - operation: [multiply, subtract, compare]
+    - num_params: [1, 2, 3]
+    - has_side_effect: [false]   # keep variants pure to isolate scope lesson
+  self_check: run_against_test_cases_before_showing

@@ -1,0 +1,102 @@
+concept_id: list_comprehensions
+source: MIT 6.0001 Lecture 5 / 6
+learning_objective: >
+  Write list comprehensions with optional filter conditions, recognize them
+  as equivalent to for-loop patterns, and extend them to new problems.
+
+# ── Consequence graph ─────────────────────────────────────────────────────
+# Rich Active/Constructive boundary — the slide example is trivially reproducible,
+# making this the best concept for catching Classifier inflation.
+prerequisites:
+  - loops_iteration
+  - conditionals
+  - functions_and_scope
+
+advance_to:
+  - higher_order_functions    # map/filter are the functional equivalent
+  - generator_expressions     # lazy evaluation variant
+  - dictionary_comprehensions # direct syntactic extension
+
+typical_sessions_to_master: 2
+
+# ── Worked examples ───────────────────────────────────────────────────────
+worked_examples:
+  - id: squares
+    code: |
+      squares = [x * x for x in range(10)]
+    test_cases:
+      - {expr: "squares", expected: [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]}
+
+  - id: evens_filtered
+    code: |
+      evens = [x for x in range(20) if x % 2 == 0]
+    test_cases:
+      - {expr: "evens", expected: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]}
+
+# ── Known failure modes ───────────────────────────────────────────────────
+failure_modes:
+
+  - id: filter_vs_transform_confusion
+    description: Puts the condition in the expression instead of the filter position
+    executor_signal: wrong_answer or TypeError (boolean in output list)
+    disambiguate: null
+    provocateur_strategy: surface_gap
+    provocateur_prompts:
+      - "Your list contains True/False values — should the condition decide what's IN the list, or what it's transformed TO?"
+      - "Write the equivalent for loop. Where does the if go in that version?"
+
+  - id: wrong_iteration_variable
+    description: Uses a different variable name in expression vs iteration clause
+    executor_signal: NameError
+    disambiguate: null
+    provocateur_strategy: surface_gap
+    provocateur_prompts:
+      - "The variable in 'for _ in' and the one in the expression — are they the same name?"
+
+  - id: reproduces_slide_example
+    description: Copies squares or evens example unchanged — Active, not Constructive
+    executor_signal: correct_output (but not a new application)
+    disambiguate: "output matches a worked_example exactly and no explanation given"
+    provocateur_strategy: extend_pattern
+    provocateur_prompts:
+      - "Good — now write one that gives you the cubes of odd numbers under 20."
+      - "What would you change to get only the negative numbers from a list?"
+
+  - id: nested_order_confusion
+    description: Nested comprehension has outer/inner loop order reversed
+    executor_signal: wrong_answer (transposed result)
+    disambiguate: "comprehension contains two 'for' clauses"
+    provocateur_strategy: trace_execution
+    provocateur_prompts:
+      - "Write the equivalent nested for loop. Which loop is outer? Does your comprehension match that order?"
+
+# ── Partial reveals ───────────────────────────────────────────────────────
+partial_reveals:
+  - trigger: filter_vs_transform_confusion
+    reveal: >
+      A list comprehension has two slots: [EXPRESSION for VAR in ITERABLE if CONDITION].
+      The EXPRESSION transforms each item. The CONDITION (optional) decides whether
+      to include it. Your filter belongs after 'if', not inside the expression.
+
+  - trigger: reproduces_slide_example
+    reveal: >
+      You've got the syntax right. Now try a new problem: write a comprehension
+      that gives you every word in a list that has more than 4 characters.
+      Same shape, different pieces.
+
+  - trigger: generic_stuck
+    reveal: >
+      A list comprehension is a for loop in one line. Start by writing it as a loop:
+      result = []
+      for x in range(10):
+          result.append(x * x)
+      Now we can collapse that into one line together.
+
+# ── Variant bounds ────────────────────────────────────────────────────────
+variant_template:
+  base_problems: [squares, evens_filtered]
+  perturbation_axes:
+    - transform: [cube, negate, upper_case, len]
+    - filter_condition: [odd, positive, longer_than_4, starts_with_vowel]
+    - source: [range(n), string_list, number_list]
+  self_check: run_against_test_cases_before_showing

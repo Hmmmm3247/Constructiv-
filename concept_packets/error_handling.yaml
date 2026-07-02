@@ -1,0 +1,54 @@
+concept_id: error_handling
+source: Python Software Foundation Docs — Errors and Exceptions
+learning_objective: >
+  Use try/except/finally blocks to catch specific exception types, recover
+  gracefully, and avoid bare except clauses that hide bugs.
+
+prerequisites:
+  - conditionals
+  - functions_and_scope
+
+advance_to:
+  - classes_and_objects   # custom exceptions require class definitions
+  - file_io               # file operations are the canonical try/finally use case
+
+typical_sessions_to_master: 3
+
+worked_examples:
+  - id: safe_divide
+    code: |
+      def safe_divide(a, b):
+          try:
+              return a / b
+          except ZeroDivisionError:
+              return None
+    test_cases:
+      - {input: [10, 2],   expected: 5.0}
+      - {input: [7, 0],    expected: null}
+      - {input: [-6, 3],   expected: -2.0}
+
+  - id: parse_int
+    code: |
+      def parse_int(s, default=0):
+          try:
+              return int(s)
+          except (ValueError, TypeError):
+              return default
+    test_cases:
+      - {input: ["42", 0],    expected: 42}
+      - {input: ["abc", -1],  expected: -1}
+      - {input: [null, 99],   expected: 99}
+
+failure_modes:
+  - id: bare_except
+    description: except without specifying type catches everything including KeyboardInterrupt
+    executor_signal: wrong_answer
+    provocateur_prompts:
+      - "What happens if you use bare except: and a KeyboardInterrupt fires? What bugs does that hide?"
+      - "Which specific exception should this catch? Name it."
+
+  - id: wrong_exception_type
+    description: Catching ValueError when ZeroDivisionError is what fires, or vice versa
+    executor_signal: wrong_answer
+    provocateur_prompts:
+      - "What exception does Python actually raise here? Check by running it without try/except."
