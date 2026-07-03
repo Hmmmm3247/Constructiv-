@@ -178,7 +178,27 @@ def _validate_tool_args(args: dict) -> tuple[bool, str, str]:
     if not has_def:
         return False, "no function definition found", _minimal_skeleton(raw_code)
 
+    # 4. Body must be skeleton only — no executable logic (solution code leaked in)
+    if not _body_is_skeleton(raw_code):
+        return False, "starter_code body contains logic — must be pass or docstring only", _minimal_skeleton(raw_code)
+
     return True, "", raw_code
+
+
+def _body_is_skeleton(code: str) -> bool:
+    """Reject any function whose body contains executable logic (only pass and docstrings allowed)."""
+    tree = ast.parse(code)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            for stmt in node.body:
+                if isinstance(stmt, ast.Pass):
+                    continue
+                if (isinstance(stmt, ast.Expr)
+                        and isinstance(stmt.value, ast.Constant)
+                        and isinstance(stmt.value.value, str)):
+                    continue  # docstring
+                return False
+    return True
 
 
 def _minimal_skeleton(raw: str) -> str:

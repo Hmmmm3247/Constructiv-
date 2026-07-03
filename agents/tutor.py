@@ -57,6 +57,7 @@ HARD RULES FOR ALL MODES:
 - If failure_mode is provided, your response must address that specific failure — not a generic explanation.
 - In partial_reveal, the reveal must be smaller than the gap. One clue = one step.
 - In re_teach, the explanation angle must differ from every prior turn in session_history — check before writing.
+- FORMATTING: Any code MUST be in a markdown code block (```python ... ```). Never write code inline in a sentence. This is required — not optional.
 
 OUTPUT — valid JSON only, no other text:
 {"mode": "advance|partial_reveal|deliver_concept|re_teach", "text": "what the learner sees", "rationale": "one sentence: why this mode and this specific content"}"""
