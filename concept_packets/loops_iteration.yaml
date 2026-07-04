@@ -18,6 +18,15 @@ typical_sessions_to_master: 2
 
 # ── Worked examples ───────────────────────────────────────────────────────
 worked_examples:
+  # First example: the absolute minimum — one loop, one line, no functions, no accumulators.
+  # deliver_concept feeds worked_examples[0] to the tutor, so this must be the simplest possible.
+  - id: first_loop
+    code: |
+      for i in range(5):
+          print(i)
+      # prints: 0, 1, 2, 3, 4
+    test_cases: []
+
   - id: sum_list
     code: |
       def sum_list(nums):
