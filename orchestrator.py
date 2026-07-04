@@ -197,11 +197,17 @@ class Orchestrator:
 
         elif route_decision.agent == "challenger":
             try:
+                # Pass only this concept's events — cross-concept history is irrelevant
+                # and bloats the tool-call context. At prior_count==1 this is 1 event.
+                concept_history = [
+                    {"role": "learner", "text": e["evidence"]}
+                    for e in concept_events
+                ]
                 challenge = self._challenger.generate(
                     concept_id,
                     icap_result,
                     content_chunk,
-                    session_history,
+                    concept_history,
                     learner_message,
                 )
                 response_text  = challenge.text

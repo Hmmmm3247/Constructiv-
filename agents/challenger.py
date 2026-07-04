@@ -248,11 +248,12 @@ class Challenger:
         session_history: list[dict],
         learner_message: str,
     ) -> ChallengeResponse:
-        # session_history intentionally excluded — Challenger only needs what was taught,
-        # not the full conversation. Keeping context small reduces tool-call latency.
+        # session_history here is concept-filtered (not all topics) — only what the
+        # learner has done on this specific concept. Keeps context small and relevant.
         context = (
             f"concept_id: {concept_id}\n"
             f"icap_level: {icap_result.icap_level}\n"
+            f"prior_attempts_on_this_concept: {json.dumps(session_history)}\n"
             f"content_chunk (what was just taught):\n{content_chunk}\n\n"
             f"learner_message: {learner_message}"
         )
