@@ -64,43 +64,38 @@ _TOOLS = [
         "function": {
             "name": "create_challenge",
             "description": (
-                "Create a calibrated coding challenge that pushes the learner from "
-                "Passive/Active to Constructive ICAP level — they must generate, not reproduce."
+                "Create a calibrated coding challenge that pushes the learner to "
+                "Constructive ICAP level — they must generate, not reproduce."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "intro": {
+                    "prompt": {
                         "type": "string",
                         "description": (
-                            "1-2 warm sentences: what the challenge is and why it connects "
-                            "to the concept just learned. Never use the word 'challenge'."
+                            "2-3 sentences shown to the learner: one warm sentence "
+                            "connecting to what they just learned, then one sentence "
+                            "stating exactly what the function should do. "
+                            "Never use the word 'challenge'."
                         ),
-                    },
-                    "task_description": {
-                        "type": "string",
-                        "description": "What the function should do — plain English, one sentence.",
                     },
                     "starter_code": {
                         "type": "string",
                         "description": (
-                            "A valid Python function: correct signature + docstring. "
-                            "Body must be 'pass' or strategic # TODO comments only. "
-                            "MUST NOT contain the solution or meaningful logic. "
-                            "MUST NOT import os, sys, subprocess, or call eval/exec. "
-                            "Must be syntactically valid Python the learner can run immediately."
+                            "A valid Python function skeleton: def line + docstring + pass. "
+                            "Body must be pass only — no logic, no solution. "
+                            "No imports. No eval/exec/open. Syntactically valid."
                         ),
                     },
                     "constraint": {
                         "type": "string",
                         "description": (
-                            "One rule that makes copy-pasting the worked example impossible. "
-                            "E.g. 'Your base case is the empty string, not 0' or "
-                            "'You cannot use a for loop'."
+                            "One rule making copy-paste of the worked example impossible. "
+                            "E.g. 'Use a while loop, not for' or 'Start counting from 1, not 0'."
                         ),
                     },
                 },
-                "required": ["intro", "task_description", "starter_code", "constraint"],
+                "required": ["prompt", "starter_code", "constraint"],
             },
         },
     }
@@ -225,8 +220,7 @@ def _audit(concept_id: str, args: dict, passed: bool, reason: str) -> None:
         "tool":               "create_challenge",
         "concept_id":         concept_id,
         "model":              QWEN_MODEL,
-        "args_intro":         args.get("intro", "")[:200],
-        "args_task":          args.get("task_description", "")[:200],
+        "args_prompt":        args.get("prompt", "")[:300],
         "args_constraint":    args.get("constraint", "")[:200],
         "args_starter_code":  args.get("starter_code", "")[:500],
         "validation_passed":  passed,
@@ -254,12 +248,13 @@ class Challenger:
         session_history: list[dict],
         learner_message: str,
     ) -> ChallengeResponse:
+        # session_history intentionally excluded — Challenger only needs what was taught,
+        # not the full conversation. Keeping context small reduces tool-call latency.
         context = (
             f"concept_id: {concept_id}\n"
-            f"content_chunk (what was just taught):\n{content_chunk}\n\n"
-            f"learner_message: {learner_message}\n"
             f"icap_level: {icap_result.icap_level}\n"
-            f"session_history: {json.dumps(session_history)}"
+            f"content_chunk (what was just taught):\n{content_chunk}\n\n"
+            f"learner_message: {learner_message}"
         )
 
         resp = self._client.chat.completions.create(
@@ -271,6 +266,7 @@ class Challenger:
             tools=_TOOLS,
             tool_choice={"type": "function", "function": {"name": "create_challenge"}},
             temperature=0.65,
+            max_tokens=400,
             timeout=30,
         )
 
@@ -288,28 +284,24 @@ class Challenger:
         _audit(concept_id, raw_args, passed, reason)
 
         meta = {
-            "tool":               "create_challenge",
-            "concept_id":         concept_id,
-            "intro":              raw_args.get("intro", ""),
-            "task_description":   raw_args.get("task_description", ""),
-            "constraint":         raw_args.get("constraint", ""),
-            "validation_passed":  passed,
-            "validation_reason":  reason,
+            "tool":              "create_challenge",
+            "concept_id":        concept_id,
+            "prompt":            raw_args.get("prompt", ""),
+            "constraint":        raw_args.get("constraint", ""),
+            "validation_passed": passed,
+            "validation_reason": reason,
         }
 
         if passed:
             text = (
-                f"{raw_args['intro']}\n\n"
-                f"**Your task:** {raw_args['task_description']}\n\n"
+                f"{raw_args['prompt']}\n\n"
                 f"⚠️ **Constraint:** {raw_args['constraint']}\n\n"
-                f"I've pre-filled the function signature below — complete the body and hit Send."
+                f"Complete the function below and hit Send."
             )
         else:
-            # Validation failed — use the safe skeleton and tell the learner honestly
             text = (
-                f"Here's a problem to try — write a function from scratch using "
-                f"what you just learned.\n\n"
-                f"I've pre-filled the signature below — complete the body and hit Send."
+                f"Here's a problem to try — write a function using what you just learned.\n\n"
+                f"Complete the function below and hit Send."
             )
 
         return ChallengeResponse(text=text, starter_code=starter_code, meta=meta)
