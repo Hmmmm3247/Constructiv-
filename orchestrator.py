@@ -49,10 +49,11 @@ class OrchestratorResponse:
     evidence: str
     signal: str | None       # from sandbox, None if no code submitted
     failure_mode: str | None
-    route_reason:   str        # human-readable reason the router chose this branch
-    starter_code:   str | None # pre-populate code editor when Challenger fires; None otherwise
-    challenge_meta: dict | None # tool call args + validation result; None when not challenger
-    audit_report:   Any        # AuditReport from auditor
+    route_reason:         str
+    starter_code:         str | None
+    challenge_meta:       dict | None
+    audit_report:         Any
+    recommended_concepts: list[dict]  # [{concept_id, status, unlocked_by, downstream_reach}]
 
 
 # ---------------------------------------------------------------------------
@@ -232,7 +233,13 @@ class Orchestrator:
         audit_report: AuditReport = self._auditor.audit_fast(learner_id)
 
         # ------------------------------------------------------------------
-        # 8. Return
+        # 8. Recommendation engine
+        # ------------------------------------------------------------------
+        traj_summary = self._trajectory.summary(learner_id)
+        recommendations = self._concept_graph.recommend(traj_summary, top_n=2)
+
+        # ------------------------------------------------------------------
+        # 9. Return
         # ------------------------------------------------------------------
         return OrchestratorResponse(
             agent_used=route_decision.agent,
@@ -247,4 +254,5 @@ class Orchestrator:
             starter_code=starter_code,
             challenge_meta=challenge_meta,
             audit_report=audit_report,
+            recommended_concepts=recommendations,
         )

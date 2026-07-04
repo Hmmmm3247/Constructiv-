@@ -61,6 +61,56 @@ class ConceptGraph:
         """Count of concepts transitively reachable from concept_id (fan-out)."""
         return len(self.reachable(concept_id))
 
+    def recommend(self, trajectory_summary: dict, top_n: int = 2) -> list[dict]:
+        """
+        Recommend what to study next given a trajectory summary
+        (from TrajectoryStore.summary()).
+
+        Priority:
+          1. In-progress concepts (started but not Constructive/Interactive)
+             that are direct advance_to neighbours of mastered concepts.
+          2. Unlocked concepts (never attempted) that are neighbours of mastered.
+          3. Fallback when nothing is mastered: highest-reach unmastered concept
+             in the entire graph (steers the learner to the best starting point).
+
+        Returns up to top_n dicts:
+          {concept_id, status, unlocked_by, downstream_reach}
+        """
+        mastered  = {cid for cid, s in trajectory_summary.items()
+                     if s["current_level"] in {"Constructive", "Interactive"}}
+        attempted = set(trajectory_summary.keys())
+
+        candidates: dict[str, dict] = {}
+
+        for mc in mastered:
+            for neighbour in self._graph.get(mc, []):
+                if neighbour in mastered or neighbour in candidates:
+                    continue
+                status = "in_progress" if neighbour in attempted else "unlocked"
+                candidates[neighbour] = {
+                    "concept_id":       neighbour,
+                    "status":           status,
+                    "unlocked_by":      mc,
+                    "downstream_reach": self.downstream_reach(neighbour),
+                }
+
+        # Fallback: nothing mastered yet — recommend highest-reach unmastered concept
+        if not candidates:
+            for cid in self._graph:
+                if cid not in mastered and cid not in candidates:
+                    candidates[cid] = {
+                        "concept_id":       cid,
+                        "status":           "in_progress" if cid in attempted else "suggested",
+                        "unlocked_by":      None,
+                        "downstream_reach": self.downstream_reach(cid),
+                    }
+
+        order = {"in_progress": 0, "unlocked": 1, "suggested": 2}
+        return sorted(
+            candidates.values(),
+            key=lambda x: (order.get(x["status"], 9), -x["downstream_reach"]),
+        )[:top_n]
+
     def rank_stuck_concepts(self, stuck: list[dict]) -> list[dict]:
         """
         Takes stuck_concepts() output from TrajectoryStore, adds reach and ranks.

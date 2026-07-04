@@ -368,6 +368,49 @@ def _audit_md(resp) -> str:
     return _audit_report_md(resp.audit_report)
 
 
+_EMPTY_REC = (
+    '<div class="ic-card" style="color:#94a3b8;font-size:0.88rem">'
+    'Study a concept to unlock recommendations.</div>'
+)
+
+_STATUS_STYLE = {
+    "in_progress": ("🟡", "#d97706", "Resume"),
+    "unlocked":    ("🔓", "#2563eb", "Start"),
+    "suggested":   ("💡", "#7c3aed", "Try this"),
+}
+
+def _rec_md(resp) -> str:
+    recs = getattr(resp, "recommended_concepts", [])
+    if not recs:
+        return _EMPTY_REC
+    lines = ['<div class="ic-card">']
+    for i, r in enumerate(recs):
+        icon, color, badge = _STATUS_STYLE.get(r["status"], ("➡", "#64748b", r["status"]))
+        label = r["concept_id"].replace("_", " ").title()
+        unlocked_line = (
+            f'<div style="color:#94a3b8;font-size:0.75rem;margin-top:2px">'
+            f'via {r["unlocked_by"].replace("_"," ").title()}</div>'
+            if r.get("unlocked_by") else ""
+        )
+        lines.append(
+            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;'
+            f'{"margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid #f1f5f9" if i else ""}">'
+            f'<div>'
+            f'<span style="font-size:0.92rem">{icon}</span> '
+            f'<span style="font-weight:600;font-size:0.86rem;color:#0f172a">{label}</span>'
+            f'{unlocked_line}'
+            f'</div>'
+            f'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">'
+            f'<span style="background:{color};color:white;border-radius:4px;'
+            f'padding:1px 7px;font-size:0.68rem;font-weight:600">{badge}</span>'
+            f'<span style="color:#94a3b8;font-size:0.72rem">{r["downstream_reach"]} downstream</span>'
+            f'</div>'
+            f'</div>'
+        )
+    lines.append('</div>')
+    return "".join(lines)
+
+
 # ── Event handlers ──────────────────────────────────────────────────────────────
 
 def run_full_audit():
@@ -409,13 +452,14 @@ def submit(message, code, concept_id, history_raw, history_icap):
         code_update      = gr.update(value="")
         accordion_update = gr.update()
 
-    return history_raw, history_icap, "", code_update, _icap_md(resp), _audit_md(resp), accordion_update
+    return (history_raw, history_icap, "", code_update,
+            _icap_md(resp), _audit_md(resp), accordion_update, _rec_md(resp))
 
 
 def clear_session():
     empty_icap  = '<div class="ic-card" style="color:#94a3b8;font-size:0.88rem">Submit your first message to begin.</div>'
     empty_audit = '<div class="ic-card" style="color:#94a3b8;font-size:0.88rem">No data yet.</div>'
-    return [], [], "", "", empty_icap, empty_audit, gr.update(open=False)
+    return [], [], "", "", empty_icap, empty_audit, gr.update(open=False), _EMPTY_REC
 
 
 # ── Layout ─────────────────────────────────────────────────────────────────────
@@ -510,6 +554,9 @@ with gr.Blocks(title="ICAP Coding Tutor") as demo:
 
             full_audit_btn = gr.Button("🔍  Full Audit", variant="secondary", size="sm", elem_id="audit-btn")
 
+            gr.HTML('<div class="sidebar-label" style="margin-top:0.9rem">What\'s Next</div>')
+            rec_panel = gr.HTML(_EMPTY_REC)
+
             gr.HTML("""
             <div style="margin-top:0.9rem;padding:0.75rem;background:#f8fafc;
                         border-radius:10px;border:1px solid #e2e8f0">
@@ -558,7 +605,7 @@ with gr.Blocks(title="ICAP Coding Tutor") as demo:
     compare_visible = gr.State(False)
 
     # ── Event wiring ──────────────────────────────────────────────────────────
-    outputs = [chatbot_raw, chatbot_icap, msg, code, icap_panel, audit_panel, code_accordion]
+    outputs = [chatbot_raw, chatbot_icap, msg, code, icap_panel, audit_panel, code_accordion, rec_panel]
     submit_btn.click(fn=submit,        inputs=[msg, code, concept, chatbot_raw, chatbot_icap], outputs=outputs)
     msg.submit(       fn=submit,        inputs=[msg, code, concept, chatbot_raw, chatbot_icap], outputs=outputs)
     clear_btn.click(  fn=clear_session, inputs=[],                                              outputs=outputs)
