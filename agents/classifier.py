@@ -11,7 +11,7 @@ from openai import OpenAI
 
 from models import QWEN_BASE_URL, QWEN_CODE as QWEN_MODEL
 
-VALID_LEVELS = {"Passive", "Active", "Constructive", "Interactive", "Struggling"}
+VALID_LEVELS = {"Passive", "Active", "Constructive", "Interactive", "Struggling", "Off-topic"}
 
 _SYSTEM_PROMPT = """You are an ICAP engagement classifier for a Python tutoring system. Your ONLY job is to classify the learner's most recent interaction into exactly one engagement state. You do NOT tutor. You output JSON only.
 
@@ -41,6 +41,15 @@ STRUGGLING - stuck, frustrated, or disengaging WITHIN THE CURRENT CONCEPT. Requi
   defeat about the current concept ("this makes no sense", "I give up"), or short
   disengaged replies after prior attempts AT THIS CONCEPT.
 
+OFF-TOPIC - the message has nothing to do with programming, Python, or the concept being studied.
+  Use this when the learner asks about celebrities, sports, pop culture, general knowledge,
+  or anything clearly outside a coding tutoring session (e.g. "how old is eren jaeger",
+  "who won the world cup", "what's 2+2").
+  Also use for curriculum meta-questions that aren't about the current concept
+  (e.g. "what's the most advanced concept", "how many topics are there").
+  Do NOT use for genuine confusion that sounds off-topic but is about programming.
+  When Off-topic, set evidence to a brief description of what the message actually asked.
+
 CRITICAL RULES:
 - RULE F (fresh start): If the learner is asking to BEGIN the current concept and has NO
   prior attempt at THIS concept in the history, classify PASSIVE. Do not classify
@@ -61,7 +70,7 @@ CRITICAL RULES:
 - When torn between two levels, choose the LOWER one. Under-crediting is safe.
 
 OUTPUT - JSON only, no other text:
-{"icap_level": "Passive|Active|Constructive|Interactive|Struggling", "confidence": 0.0-1.0, "evidence": "one short clause citing the specific signal IN THE CURRENT CONCEPT"}"""
+{"icap_level": "Passive|Active|Constructive|Interactive|Struggling|Off-topic", "confidence": 0.0-1.0, "evidence": "one short clause citing the specific signal IN THE CURRENT CONCEPT"}"""
 
 
 @dataclass

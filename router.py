@@ -66,6 +66,11 @@ def route(
                       Passive/Active/Struggling — from TrajectoryStore.consecutive_stuck()
     prior_count     : total prior events for this concept (before this turn)
     """
+    # Off-topic: not a programming question at all — redirect warmly, no trajectory recorded.
+    if icap_level == "Off-topic":
+        return RouteDecision("tutor", "redirect", icap_level, confidence, failure_mode,
+                             reason="off-topic message — redirect without recording trajectory")
+
     # Curious first-time learner — no misconception exists yet, so probing is wrong.
     # Teach the concept, give a DO-step, then let the next turn probe if needed.
     if no_prior_attempt and icap_level == "Passive":

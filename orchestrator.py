@@ -180,7 +180,31 @@ class Orchestrator:
         )
 
         # ------------------------------------------------------------------
-        # 5. Dispatch
+        # 5. Off-topic early return — no agent call, no trajectory record
+        # ------------------------------------------------------------------
+        if route_decision.mode == "redirect":
+            concept_name = concept_id.replace("_", " ").replace("-", " ")
+            redirect_text = (
+                f"I'm a Python coding tutor, so that one's outside my lane! "
+                f"Happy to help you with **{concept_name}** though — "
+                f"what would you like to explore or try?"
+            )
+            traj_summary = self._trajectory.summary(learner_id)
+            return OrchestratorResponse(
+                agent_used="tutor", mode="redirect",
+                response_text=redirect_text,
+                icap_level="Off-topic",
+                confidence=icap_result.confidence,
+                evidence=icap_result.evidence,
+                signal=None, failure_mode=None,
+                route_reason=route_decision.reason,
+                starter_code=None, challenge_meta=None,
+                audit_report=self._auditor.audit_fast(learner_id),
+                recommended_concepts=self._concept_graph.recommend(traj_summary, top_n=2),
+            )
+
+        # ------------------------------------------------------------------
+        # 6. Dispatch
         # ------------------------------------------------------------------
         starter_code:   str | None  = None
         challenge_meta: dict | None = None
@@ -240,7 +264,7 @@ class Orchestrator:
             response_text = tutor_response.text
 
         # ------------------------------------------------------------------
-        # 6. Record
+        # 7. Record
         # ------------------------------------------------------------------
         self._trajectory.record(
             learner_id, concept_id, icap_result.icap_level, icap_result.evidence,
