@@ -271,6 +271,7 @@ class Challenger:
             tools=_TOOLS,
             tool_choice={"type": "function", "function": {"name": "create_challenge"}},
             temperature=0.65,
+            timeout=30,
         )
 
         msg = resp.choices[0].message

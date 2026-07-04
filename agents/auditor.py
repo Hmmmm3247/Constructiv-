@@ -100,6 +100,7 @@ def _consequence_for(
         ],
         response_format={"type": "json_object"},
         temperature=0,
+        timeout=30,
     )
 
     data = json.loads(response.choices[0].message.content)
@@ -180,6 +181,7 @@ def _overall_summary(risks: list[ConceptRisk]) -> str:
         ],
         response_format={"type": "json_object"},
         temperature=0,
+        timeout=30,
     )
 
     data = json.loads(response.choices[0].message.content)

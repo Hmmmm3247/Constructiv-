@@ -118,6 +118,7 @@ class Tutor:
                 {"role": "user", "content": context},
             ],
             temperature=0.4,
+            timeout=30,
             response_format={"type": "json_object"},
         )
         raw = json.loads(resp.choices[0].message.content)

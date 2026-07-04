@@ -86,6 +86,7 @@ class Provocateur:
                 {"role": "user", "content": context},
             ],
             temperature=0.3,
+            timeout=30,
             response_format={"type": "json_object"},
         )
         raw = json.loads(resp.choices[0].message.content)

@@ -196,16 +196,30 @@ class Orchestrator:
             response_text = provocation.text
 
         elif route_decision.agent == "challenger":
-            challenge = self._challenger.generate(
-                concept_id,
-                icap_result,
-                content_chunk,
-                session_history,
-                learner_message,
-            )
-            response_text  = challenge.text
-            starter_code   = challenge.starter_code
-            challenge_meta = challenge.meta
+            try:
+                challenge = self._challenger.generate(
+                    concept_id,
+                    icap_result,
+                    content_chunk,
+                    session_history,
+                    learner_message,
+                )
+                response_text  = challenge.text
+                starter_code   = challenge.starter_code
+                challenge_meta = challenge.meta
+            except Exception:
+                # Challenger timed out or tool call failed — fall back to tutor advance
+                tutor_response = self._tutor.respond(
+                    "advance",
+                    icap_result,
+                    content_chunk,
+                    session_history,
+                    learner_message,
+                    signal,
+                    failure_mode,
+                )
+                response_text  = tutor_response.text
+                route_decision.agent = "tutor"
 
         else:  # "tutor"
             tutor_response = self._tutor.respond(
