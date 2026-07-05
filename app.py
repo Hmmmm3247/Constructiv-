@@ -51,18 +51,23 @@ LEVEL_META = {
 
 SIGNAL_COLORS = {"Pass": "#22c55e", "Fail": "#ef4444", "Error": "#f97316"}
 
-ALL_CONCEPTS = [
-    "variables_and_types",
-    "conditionals",
-    "functions_and_scope",
-    "loops_iteration",
-    "string_methods",
-    "recursion_basics",
-    "list_comprehensions",
-    "error_handling",
-    "sorting_and_searching",
-    "classes_and_objects",
+# Ordered by concept graph entry point (highest downstream reach first).
+# Tuple: (concept_id, display_label) — labels use plain English for zero-knowledge users.
+_CONCEPT_OPTIONS = [
+    ("variables_and_types",   "Variables & Types"),
+    ("conditionals",          "If / Else (Conditionals)"),
+    ("functions_and_scope",   "Functions"),
+    ("loops_iteration",       "Loops"),
+    ("string_methods",        "Working with Text (Strings)"),
+    ("error_handling",        "Handling Errors"),
+    ("classes_and_objects",   "Classes & Objects"),
+    ("list_comprehensions",   "List Comprehensions"),
+    ("recursion_basics",      "Recursion"),
+    ("sorting_and_searching", "Sorting & Searching"),
 ]
+ALL_CONCEPTS    = [cid   for cid, _   in _CONCEPT_OPTIONS]
+CONCEPT_LABELS  = [label for _,   label in _CONCEPT_OPTIONS]
+CONCEPT_DEFAULT = "variables_and_types"
 
 # ── CSS ────────────────────────────────────────────────────────────────────────
 
@@ -580,14 +585,14 @@ with gr.Blocks(title="ICAP Coding Tutor") as demo:
     gr.HTML('<div style="margin-top:0.75rem"></div>')
 
     concept = gr.Radio(
-        choices=ALL_CONCEPTS,
-        value="recursion_basics",
+        choices=list(zip(ALL_CONCEPTS, CONCEPT_LABELS)),
+        value=CONCEPT_DEFAULT,
         label="Topic",
         elem_id="concept-row",
     )
 
     msg = gr.Textbox(
-        placeholder="What's confusing? Describe what you tried or ask a question...",
+        placeholder="Pick a topic above and say 'let's start' — or ask anything about it...",
         lines=2,
         max_lines=6,
         show_label=False,
